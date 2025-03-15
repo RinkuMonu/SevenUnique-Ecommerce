@@ -3,6 +3,7 @@ import { State, City } from "country-state-city";
 import { ChevronLeft, Wallet, Check } from "lucide-react";
 import logo from "../assest/4.png";
 import { Link } from "react-router-dom";
+import axios from "axios";
 interface Address {
   id: string;
   name: string;
@@ -82,12 +83,13 @@ const coupons: CouponCode[] = [
 function AddressShiping({ cartItems }) {
   const [isNewAddress, setIsNewAddress] = useState(false); // State for new address form visibility
 
-  const handleAddressChange = (e) => {
+  const handleAddressChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    setSelectedAddress(value);
     setIsNewAddress(value === "new");
+    setSelectedAddress(value);
   };
-  const [selectedAddress, setSelectedAddress] = useState<string>("new");
+
+  const [selectedAddress, setSelectedAddress] = useState<string>("");
   const [selectedShipping, setSelectedShipping] = useState<string>("1");
   const [selectedPayment, setSelectedPayment] = useState<string>("phonepe");
   const [showCouponInput, setShowCouponInput] = useState(false);
@@ -109,6 +111,38 @@ function AddressShiping({ cartItems }) {
   const shipping =
     shippingMethods.find((m) => m.id === selectedShipping)?.price || 0;
   const total = subtotal + shipping;
+
+  const data ={
+    name: "Dinesh",
+    amount: total,
+    number: '7498608775',
+    MUID: "MUID" + Date.now(),
+    transactionId: 'T' + Date.now(),
+}
+  const handlePayment = (e) => {
+    e.preventDefault();
+
+    axios
+        .post('https://digihub-backend.onrender.com/payment/add', { ...data })
+        .then((res) => {
+            // Log the response for debugging
+            console.log("Payment Responseeee:", res.data);
+
+            // Check if redirectUrl is present in the response
+            if (res.data) {
+                const redirectUrl = res.data;
+
+                // Redirect the user to PhonePe payment page
+                window.location.href = redirectUrl;
+            } else {
+                console.error("Redirect URL missing in the response");
+            }
+        })
+        .catch((error) => {
+            console.error("Payment Error:", error);
+        });
+};
+
 
   return (
     <div className=" min-h-screen bg-gray-50">
@@ -137,6 +171,7 @@ function AddressShiping({ cartItems }) {
                       value={selectedAddress}
                       onChange={handleAddressChange}
                     >
+                      <option value="">Select Address</option>
                       <option value="new">Add new address...</option>
                       {addresses.map((addr) => (
                         <option key={addr.id} value={addr.id}>
@@ -399,7 +434,7 @@ function AddressShiping({ cartItems }) {
                   <ChevronLeft className="w-5 h-5" />
                   Back to Cart
                 </Link>
-                <button className=" bg-[#434389] text-white py-3 px-4 rounded-lg hover:bg-[#5252a2] font-medium">
+                <button className=" bg-[#434389] text-white py-3 px-4 rounded-lg hover:bg-[#5252a2] font-medium" onClick={handlePayment}>
                   Place Order
                 </button>
               </div>
